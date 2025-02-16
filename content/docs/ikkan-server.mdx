@@ -1,0 +1,51 @@
+---
+title: "@ikkan/server"
+description: Server-side functionalities for Ikkan
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+This package handles the server-side part of **Ikkan**. It is designed to be used with Next.js, and it will take care of the boilerplate code for you, so you can focus on writing the logic of your API.
+
+This package only exposes two functions, that you will use on a well-defined `config` object of type [IkkanConfig](/docs/ikkan-core#type-ikkanconfig).
+
+## Functions
+
+### ikkanHandler
+
+This function will take a [IkkanConfig](/docs/ikkan-core#type-ikkanconfig) object and return an object than can be used by Next.js to handle the request.
+
+```ts
+import { ikkanHandler } from "@ikkan/server";
+import { config } from "./config";
+
+// If you have a GET endpoint
+export const { GET } = await ikkanHandler(config);
+```
+
+This code must be placed in a `route.ts` file, that will be used by Next.js to define the route of your endpoint.
+
+Some considerations:
+- **Error handling**: The error handling is done automatically by **Ikkan**. If an error is thrown in your function, it will be wrapped in a `SerializedError` object, and sent to the client.
+- **Schema validation**: The schema validation is done automatically by **Ikkan**. If the data sent by the client does not match the schema, a 400 error will be sent to the client.
+- **Params**: 
+  - In the case of a method using search params (such as `GET`), the params will be passed in a single search params, named `params`. You can access them using `req.query.params`.
+  - In the case of a method using a body (such as `POST`), the body will be passed in the body, as JSON. You can access them using `req.body`.
+
+### ikkanServerBridge
+
+This function will take a [IkkanConfig](/docs/ikkan-core#type-ikkanconfig) object and return a function that will call the endpoint, intended to be used on the server-side.
+
+```ts
+import { ikkanServerBridge } from "@ikkan/server";
+import { config } from "./config";
+
+export const serverBridge = ikkanServerBridge(config);
+```
+
+This function first will take the params of the endpoint and return a fetcher function that will call the endpoint with params and return the result.
+
+```ts
+const fetcher = serverBridge({ id: "123" });
+const result = await fetcher({ name: "world" }); // You can pass RequestInit to the fetcher
+```

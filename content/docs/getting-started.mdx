@@ -1,0 +1,67 @@
+---
+title: Getting started
+description: How to write your first endpoint with Ikkan
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { DynamicCodeBlock } from 'fumadocs-ui/components/dynamic-codeblock';
+import { File, Folder, Files } from 'fumadocs-ui/components/files';
+
+There is no obligations about how you should structure your files, but here is a recommended structure:
+
+<Files>
+  <Folder name="app" defaultOpen>
+    <Folder name="api" defaultOpen>
+      <Folder name="greeting" defaultOpen>
+        <File name="config.ts" />
+        <File name="route.ts" />
+        <File name="bridge.ts" />
+      </Folder>
+    </Folder>
+  </Folder>
+</Files>
+
+### `config.ts`
+
+This file is used to define how your endpoint will behave. It should export [IkkanConfig](/docs/ikkan-core#type-ikkanconfig) objects, that will be used to configure actual implementations of your endpoint and client-side/server-side functions.\
+
+<DynamicCodeBlock lang="ts" code={
+`import { ikkanConfig } from "@ikkan/core";
+import { z } from "zod";
+
+export const config = ikkanConfig({
+\tendpoint: () => "/api/greeting",
+\tmethod: "GET",
+\tschema: z.string(),
+\tfn: async (_req, name) => {
+\t\treturn 'Hello, ' + name + '!';
+\t},
+});`
+} />
+
+### `route.ts`
+
+It is the file that Next.js uses to define the route of your endpoint.\
+It should export a function that will be used when calling to that specific endpoint. You don't have to write much in this file, as **Ikkan** will take care of the boilerplate for you.\
+You can export multiple functions, if you endpoint supports multiple methods.
+
+<DynamicCodeBlock lang="ts" code={
+`import { ikkanHandler } from "@ikkan/server";
+import { config } from "./config";
+
+export const { GET } = await ikkanHandler(config);
+`
+} />
+
+### `bridge.ts`
+
+This file is used to define the client-side or server-side function that will call your endpoint.\
+It is you responsibility as a developer to export relevant functions (server-side, client-side without SWR, client-side with SWR) that will call the endpoint.
+
+<DynamicCodeBlock lang="ts" code={
+  `import { ikkanClientBridge } from "@ikkan/server";
+import { config } from "./config";
+
+export const { hook: useGetGreeting, action: getGreeting } = ikkanClientBridge(config);
+`
+} />

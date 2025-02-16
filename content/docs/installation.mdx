@@ -1,0 +1,47 @@
+---
+title: Installation
+description: How to install Ikkan
+---
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { DynamicCodeBlock } from 'fumadocs-ui/components/dynamic-codeblock';
+
+## Installation
+
+To get started with **Ikkan**, you need to install the package from your favorite package manager:
+<Tabs items={['pnpm', 'npm', 'yarn', 'bun']}>
+  <Tab value="pnpm">
+    <DynamicCodeBlock lang="bash" code="pnpm dlx ikkan@latest init" />
+  </Tab>
+  <Tab value="npm">
+    <DynamicCodeBlock lang="bash" code="npx ikkan@latest init" />
+  </Tab>
+  <Tab value="yarn">
+    <DynamicCodeBlock lang="bash" code="yarn dlx ikkan@latest init" />
+  </Tab>
+  <Tab value="bun">
+    <DynamicCodeBlock lang="bash" code="bunx --bun ikkan@latest init" />
+  </Tab>
+</Tabs>
+
+```text
+🚀 Welcome to Ikkan initialization!
+
+📦 Detected package manager: pnpm
+
+Checking peer dependencies...
+
+The following packages will be installed:
+- @ikkan/core
+- @ikkan/client
+- @ikkan/server
+
+Required peer dependencies:
+- next
+- react
+- swr
+- zod
+
+Would you like to continue? (Y/n):
+```
+
+The initialization script will ask you if you want to continue, and will install the necessary packages if you do.

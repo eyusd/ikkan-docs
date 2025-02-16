@@ -1,13 +1,26 @@
 ---
-title: Hello World
-description: Your first document
+title: Introduction
+description: An opinionated framework to design your API on Next.js.
 ---
 
-Welcome to the docs! You can start writing documents in `/content/docs`.
+This project comes from the realization that Next.js API endpoints should be easier to work with.\
+Why should you have to write server-side code that is totally unrelated to your frontend code, and then go through the hassle of bridging the gap between the two?
 
-## What is Next?
+This is where **Ikkan** comes in. Designed to be simple, powerful and flexible, it links your server-side and client-side code together, forming a coherent set of type-safe functions that you can call from your frontend code.
+It is build around four main principles:
+- **Type-safety**: All your API calls are type-safe, meaning that you will be told if you pass the wrong arguments to a function, and you will know what to expect from the return value.
+- **No boilerplate**: **Ikkan** takes care of the boilerplate code for you, so you can focus on writing the logic of your API. It automatically wraps your business logic around a layer of error handling and params validation.
+- **Interdependence**: Because you designed your API, you know how a call may affect the state of your application. If you choose to cache some results, you can easily mutate the cache from your API calls.
+- **No code generation**: It is a pain to work with JSON files, or to manually run a command to generate your API. **Ikkan** is designed to be used with your existing codebase, in TypeScript, like the rest of your project.
 
-<Cards>
-  <Card title="Learn more about Next.js" href="https://nextjs.org/docs" />
-  <Card title="Learn more about Fumadocs" href="https://fumadocs.vercel.app" />
-</Cards>
+Note that this library is designed so that everything is optional. If you know what you are doing, you can still call your API in the traditional way, without using **Ikkan**, or define your endpoints in a different way. But if you want to use **Ikkan**, it will be there for you.
+
+
+---
+### Current limitations
+
+**Ikkan** is still in its early stages, and as such, it has some limitations:
+- **Limited types support**: Your endpoints using **Ikkan** must return a value that can be serialized to JSON. There is no support for `Blob`, `FormData`, `ReadableStream`, etc.
+- **No undefined return**: The `undefined` type is not supported by **Ikkan**. If you want to return `undefined`, you should return `null` instead.
+- **No support for the `HEAD` method**: Ikkan does not support the `HEAD` method (but who uses it anyway?).
+- **Imperative server-side imports**: You must not declatively import server-side only imports, as they will crash client-side code. Instead, you should use the `ssi` property of the `IkkanConfig` object to import them once, when the endpoint is first compiled.

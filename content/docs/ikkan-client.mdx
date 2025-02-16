@@ -1,0 +1,74 @@
+---
+title: "@ikkan/client"
+description: Client-side functionalities for Ikkan
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+This package handles the client-side part of **Ikkan**. It is designed to be used with Next.js, and it will take care of the boilerplate code for you, so you can focus on writing the logic of your API.
+
+It is designed to word with [SWR](https://swr.vercel.app/), a library that will handle the caching and revalidation of your data. As such, you can define data mutations that will update the cache when you define your client-side functions. You will be free from the hassle of updating the cache yourself.
+
+## Functions
+
+### ikkanClientBridge
+
+This function will take a [IkkanConfig](/docs/ikkan-core#type-ikkanconfig) object and return a function that will call the endpoint, intended to be used on the client-side.
+
+```ts
+import { ikkanClientBridge } from "@ikkan/client";
+import { config } from "./config";
+
+export const { hook, action } = ikkanClientBridge(config);
+```
+
+The `hook` function is a version of the `useSWR` hook that will call the endpoint and cache the result. It will return the data and the error. As the data cannot be `undefined`, you will have to handle the case where the data is not yet fetched.
+
+To use the hook, first call the function with the params of the endpoint, and then call the returned function with `RequestInit` options or `params` if the endpoint supports it.
+
+```ts
+const { data, error } = hook({ id: "123" })({ name: "world" }); // You can pass RequestInit to the fetcher
+```
+
+To call the endpoint without caching the result, you can use the `action` function. First pass the params of the endpoint, and then call the returned function with `RequestInit` options or `params` if the endpoint supports it.
+
+```ts
+const { get: getGreeting } = action({ id: "123" });
+const greeting = await getGreeting({ name: "world" }); // You can pass RequestInit to the fetcher
+```
+
+### sideEffect
+
+You may wonder how is the cache mutated. This is done by passing an array of functions to `ikkanClientBridge`.\
+To help you with that, and to get useful type inference, you can use the `sideEffect` function.
+
+```ts
+import { ikkanClientBridge, sideEffect } from "@ikkan/client";
+import { config as fromConfig } from "./config";
+import { config as toConfig } from "some-other-endpoint/config";
+
+export const { hook, action } = ikkanClientBridge(
+  fromConfig,
+  [
+    sideEffect(
+      fromConfig,
+      toConfig,
+    )({
+      endpointGenerator: ({ segments, params, output }) => otherEndpoint(...), // To generate the args required by the other endpoint
+      mutator: (cachedValue, response) => someValue(...), // To mutate the cache
+    }),
+  ],
+);
+```
+
+This function will need two `IkkanConfig` objects, the first one being the one that will be used to call the endpoint, and the second one being the one that will be used to update the cache.\
+It will return a function that will take one or two arguments:
+- if the endpoint associated with the data mutation is dynamic, `endpointGenerator` must be defined. It is a function that will take:
+  - `segments`: the segments of the endpoint currently being fetched (from `fromConfig`)
+  - `params`: the params of the endpoint currently being fetched (from `fromConfig`)
+  - `output`: the output of the endpoint currently being fetched (from `fromConfig`)
+  It must return the args that will be passed to the other endpoint (from `toConfig`).
+- `mutator` must be defined. It is a function that will take:
+  - `cachedValue`: the value currently in the cache (from `toConfig`), that can be `undefined`.
+  - `response`: the response of the endpoint currently being fetched (from `fromConfig`)
+  It must return the new value that will be in the cache, possibly `undefined`.

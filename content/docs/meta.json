@@ -1,0 +1,5 @@
+{
+  "title": "Name of Folder",
+  "root": true,
+  "pages": ["index", "installation", "getting-started", "example", "---Packages---", "ikkan-core", "ikkan-server", "ikkan-client"]
+}

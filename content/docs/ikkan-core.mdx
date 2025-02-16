@@ -1,0 +1,107 @@
+---
+title: "@ikkan/core"
+description: Base functionalities for Ikkan
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+## Introduction
+
+This package contains utils and types that are used by the other packages in the **Ikkan** ecosystem.
+It mainly exposes the `ikkanConfig` function, which is used to configure the API.
+
+An API endpoint is reduced to a few basic properties:
+- **endpoint**: The URL of the endpoint. Because Next.js supports dynamic routes, a simple `string` is not enough. In **Ikkan**, this is represented a function that can have params (according to the [Next.js dynamic routes syntax](https://nextjs.org/docs/app/building-your-application/routing/dynamic-routes#typescript)) and that will return the URL of the endpoint.
+- **method**: The HTTP method of the endpoint. It can be any of the [HTTP methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods) supported by the browser, except for `HEAD`, which is too specific to be supported by **Ikkan**.
+- **schema**: The schema of the data that the endpoint will accept. It is a [Zod](https://zod.dev/) schema, which is a type-safe way to validate data.
+- **fn**: The function that will be called when the endpoint is hit. It is an `async function that will receive the request object and the params of the endpoint, and that will return the data that will be sent to the client.
+
+Because **Ikkan** is designed to be used with TypeScript, all these properties are type-safe, meaning that you will be told if you pass the wrong arguments to a function, and you will know what to expect from the return value.\
+You also won't have to define much types, because `ikkanConfig` will infer the types of the properties from the object you pass to it.
+
+## Types
+
+### type: IkkanConfig
+
+<TypeTable
+  type={{
+    endpoint: {
+      description:
+        'A function that will return the URL of the endpoint.',
+      type: '(() => string) | ((segments: Record<string, string, string[]>) => string)',
+    },
+    method: {
+      description:
+        'The HTTP method of the endpoint.',
+      type: 'GET | POST | PUT | DELETE | PATCH | OPTIONS',
+    },
+    schema: {
+      description:
+        'The schema of the data that the endpoint will accept.',
+      type: 'ZodType<any, any, any> | undefined',
+      default: 'undefined',
+    },
+    ssi: {
+      description:
+        'A function that will return some dynamically imported data.',
+      type: '(() => Promise<any>) | undefined',
+      default: 'undefined',
+    },
+    fn: {
+      description:
+        'The function that will be called when the endpoint is hit.',
+      type: 'IkkanHandler',
+    },
+  }}
+/>
+
+Considerations:
+- **endpoint**: If you decide to use dynamic route, you will have to type the `args` parameter of the `endpoint` function, as Typescript cannot infer if the values are supposed to be strings or arrays of strings.\
+❗ Be careful with that argument, as it is the only one that will not raise error if improperly configured.
+- **ssi**: This property is used to import data dynamically. Because the config object may be used by client-side code, server-side only imports cannot be declaratively defined. In order not to import them every time the endpoint is called, this function will only run once, when the endpoint is first compiled, and its result will be passed to `fn`.
+
+### type: IkkanHandler
+
+As you have noticed, there are three properties that can be undefined in the `IkkanConfig` type: `schema: Schema`, `ssi: ServerSideImports` and the args of the `endpoint` function (`(segments: EndpointArgs) => string`). This will result in the `IkkanHandler` type being a bit more complex than you would expect.\
+Depending on how these properties are defined or not, the `fn` function will have different parameters:
+
+| Schema | EndpointArgs | ServerSideImports | fn                                                                                                                                                        |
+|--------|--------------|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ❌      | ❌            | ❌                 | `async (req: NextRequest) => Promise<Output>`                                                                                                                        |
+| ❌      | ❌            | ✅                 | `async (req: NextRequest, imports: Awaited<ReturnType<ServerSideImports>>) => Promise<Output>`                                                                       |
+| ✅      | ❌            | ❌                 | `async (req: NextRequest, params: z.infer<Schema>) => Promise<Output>`                                                                                               |
+| ✅      | ❌            | ✅                 | `async (req: NextRequest, params: z.infer<Schema>, imports: Awaited<ReturnType<ServerSideImports>>) => Promise<Output>`                                              |
+| ❌      | ✅            | ❌                 | `async (req: NextRequest, segments: NextDynamicSegments<EndpointArgs>) => Promise<Output>`                                                                           |
+| ❌      | ✅            | ✅                 | `async (req: NextRequest, segments: NextDynamicSegments<EndpointArgs>, imports: Awaited<ReturnType<ServerSideImports>>) => Promise<Output>`                          |
+| ✅      | ✅            | ❌                 | `async (req: NextRequest, params: z.infer<Schema>, segments: NextDynamicSegments<EndpointArgs>) => Promise<Output>`                                                  |
+| ✅      | ✅            | ✅                 | `async (req: NextRequest, params: z.infer<Schema>, segments: NextDynamicSegments<EndpointArgs>, imports: Awaited<ReturnType<ServerSideImports>>) => Promise<Output>` |
+
+## ikkanConfig
+
+This function simply allows Typescript to automatically infer the types of the properties of the object you pass to it.\
+Pass it an object with the properties of the `IkkanConfig` type, and it will return an object with the same properties, but with the types inferred.
+
+```ts
+import { ikkanConfig } from '@ikkan/core';
+import { z } from 'zod';
+
+export const config = ikkanConfig({
+  endpoint: ({ id }: { id: string }) => '/api/greeting/' + id,
+  method: 'GET',
+  schema: z.object({
+    name: z.string()
+  }),
+  fn: async (_req, { name }, { id }) => {
+    return {
+      human: 'Hello, ' + name + '!',
+      robot: 'Beep boop, ' + id + '!'
+    }
+  },
+});
+```
+
+In this example, config is inferred as :
+
+```ts
+type IkkanConfig<"GET", string, z.ZodString, Record<string, string | string[]> | undefined, undefined>
+```

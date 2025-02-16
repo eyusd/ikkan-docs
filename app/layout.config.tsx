@@ -9,12 +9,12 @@ import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
  */
 export const baseOptions: BaseLayoutProps = {
   nav: {
-    // can be JSX too!
-    title: 'My App',
+    title: 'Ikkan 一貫',
   },
+  githubUrl: "https://github.com/eyusd/ikkan",
   links: [
     {
-      text: 'Documentation',
+      text: 'Docs',
       url: '/docs',
       active: 'nested-url',
     },

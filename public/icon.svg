@@ -1,0 +1,9 @@
+<svg 
+    viewBox="0 0 300 300" 
+    width="300" 
+    height="300" 
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <ellipse cx="150" cy="150" rx="150" ry="150"/>
+    <text style="fill: rgb(255, 255, 255); font-family: Roboto; font-size: 217px;" x="41.501" y="226.237">貫</text>
+  </svg>
